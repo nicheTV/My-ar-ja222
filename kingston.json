@@ -1,0 +1,17 @@
+{
+  "parish": "Kingston",
+  "drops": [
+    {
+      "lat": 17.968,
+      "lng": -76.793,
+      "type": "3d_model",
+      "asset": "https://cdn.aframe.io/test-models/models/gltf/leeperrysmith/LeePerrySmith.glb"
+    },
+    {
+      "lat": 17.972,
+      "lng": -76.800,
+      "type": "text",
+      "content": "Welcome to Downtown Kingston!"
+    }
+  ]
+}

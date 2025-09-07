@@ -1,0 +1,17 @@
+{
+  "parish": "St. Mary",
+  "drops": [
+    {
+      "lat": 18.383,
+      "lng": -76.894,
+      "type": "text",
+      "content": "Welcome to St. Mary!"
+    },
+    {
+      "lat": 18.400,
+      "lng": -76.870,
+      "type": "3d_model",
+      "asset": "https://cdn.aframe.io/test-models/models/gltf/duck/duck.gltf"
+    }
+  ]
+}
