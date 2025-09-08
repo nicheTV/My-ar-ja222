@@ -2,15 +2,15 @@
   "parish": "St. Catherine",
   "drops": [
     {
-      "lat": 17.996, 
-      "lng": -76.954, 
-      "type": "text", 
-      "content": "Welcome to Spanish Town!"
+      "lat": 17.996,
+      "lng": -76.949,
+      "type": "text",
+      "content": "✅ AR is working in Spanish Town!"
     },
     {
-      "lat": 17.996, 
-      "lng": -76.954, 
-      "type": "3d_model", 
+      "lat": 17.996,
+      "lng": -76.949,
+      "type": "3d_model",
       "asset": "https://cdn.aframe.io/test-models/models/gltf/duck/duck.gltf"
     }
   ]
