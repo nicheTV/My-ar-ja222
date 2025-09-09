@@ -5,11 +5,23 @@
       "lat": 17.996,
       "lng": -76.949,
       "type": "text",
-      "content": "✅ AR is working in Spanish Town!"
+      "content": "📍 Downtown Plaza"
     },
     {
-      "lat": 17.996,
-      "lng": -76.949,
+      "lat": 17.9962,
+      "lng": -76.9488,
+      "type": "3d_model",
+      "asset": "https://cdn.aframe.io/test-models/models/gltf/kenny/kenny.gltf"
+    },
+    {
+      "lat": 17.9958,
+      "lng": -76.9492,
+      "type": "text",
+      "content": "🍔 Food Market"
+    },
+    {
+      "lat": 17.9965,
+      "lng": -76.949, 
       "type": "3d_model",
       "asset": "https://cdn.aframe.io/test-models/models/gltf/duck/duck.gltf"
     }
