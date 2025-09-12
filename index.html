@@ -63,49 +63,56 @@
     </a-scene>
 
     <script>
-      // Update GPS debug live
-      window.addEventListener("gps-camera-update-position", e => {
-        document.getElementById("gpsDebug").innerText =
-          `Lat: ${e.detail.position.latitude.toFixed(5)}, Lng: ${e.detail.position.longitude.toFixed(5)}, Acc: ${e.detail.position.accuracy}m`;
-      });
+  async function loadParish(parishFile) {
+    try {
+      // Clear old entities
+      document.querySelectorAll("[gps-entity-place]").forEach(el => el.remove());
 
-      async function loadParish(parishFile) {
-        // Clear previous drops
-        document.querySelectorAll("[gps-entity-place]").forEach(el => el.remove());
-
-        // Fetch parish data
-        const response = await fetch(parishFile);
-        const data = await response.json();
-
-        data.drops.forEach(drop => {
-          let el;
-          if (drop.type === "text") {
-            el = document.createElement("a-text");
-            el.setAttribute("gps-entity-place", `latitude: ${drop.lat}; longitude: ${drop.lng}`);
-            el.setAttribute("value", drop.content);
-            el.setAttribute("color", "red");
-            el.setAttribute("scale", "50 50 50");
-            el.setAttribute("look-at", "[gps-camera]");
-          }
-
-          if (drop.type === "3d_model") {
-            el = document.createElement("a-entity");
-            el.setAttribute("gps-entity-place", `latitude: ${drop.lat}; longitude: ${drop.lng}`);
-            el.setAttribute("gltf-model", drop.asset);
-            el.setAttribute("scale", "15 15 15");
-          }
-
-          if (el) document.querySelector("a-scene").appendChild(el);
-        });
+      // Fetch JSON
+      const response = await fetch(parishFile);
+      if (!response.ok) {
+        throw new Error(`File not found: ${parishFile}`);
       }
+      const data = await response.json();
 
-      // Load default parish (Kingston)
-      loadParish("parishes/test.json");
-
-      // Dropdown listener
-      document.getElementById("parishSelector").addEventListener("change", (e) => {
-        loadParish(e.target.value);
+      // Add each drop
+      data.drops.forEach(drop => {
+        let el;
+        if (drop.type === "text") {
+          el = document.createElement("a-text");
+          el.setAttribute("gps-entity-place", `latitude: ${drop.lat}; longitude: ${drop.lng}`);
+          el.setAttribute("value", drop.content);
+          el.setAttribute("color", "red");
+          el.setAttribute("scale", "50 50 50");
+          el.setAttribute("look-at", "[gps-camera]");
+        }
+        if (drop.type === "3d_model") {
+          el = document.createElement("a-entity");
+          el.setAttribute("gps-entity-place", `latitude: ${drop.lat}; longitude: ${drop.lng}`);
+          el.setAttribute("gltf-model", drop.asset);
+          el.setAttribute("scale", "15 15 15");
+        }
+        if (el) document.querySelector("a-scene").appendChild(el);
       });
-    </script>
+
+      console.log(`✅ Loaded parish: ${parishFile}`);
+    } catch (err) {
+      console.error("❌ Error loading parish:", err);
+    }
+  }
+
+  // Force default load = Test
+  window.addEventListener("load", () => {
+    const selector = document.getElementById("parishSelector");
+    selector.value = "parishes/test.json"; // force default
+    loadParish(selector.value);
+
+    // Parish switch
+    selector.addEventListener("change", (e) => {
+      console.log("Switching parish:", e.target.value);
+      loadParish(e.target.value);
+    });
+  });
+</script>
   </body>
 </html>
