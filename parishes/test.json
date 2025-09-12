@@ -1,7 +1,7 @@
 [
   {
-    "type": "model",
-    "url": "Duck.gltf",
+    "type": "3d_model",
+    "url": "assets/Duck.gltf",
     "scale": "0.5 0.5 0.5",
     "rotation": "0 180 0",
     "position": "0 0 0",
