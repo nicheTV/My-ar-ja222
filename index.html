@@ -1,73 +1,110 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>My AR Jamaica</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+    <title>Parish AR World</title>
+
+    <!-- Latest A-Frame -->
+    <script src="https://aframe.io/releases/1.4.1/aframe.min.js"></script>
+
+    <!-- Updated AR.js build -->
+    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.js"></script>
+
+    <!-- GPS place component -->
     <script src="https://unpkg.com/aframe-gps-entity-place/dist/aframe-gps-entity-place.min.js"></script>
+
+    <style>
+      #parishSelector {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        z-index: 9999;
+        font-size: 16px;
+        padding: 5px;
+        border-radius: 6px;
+      }
+      #gpsDebug {
+        position: absolute;
+        bottom: 10px;
+        left: 10px;
+        background: rgba(255,255,255,0.7);
+        padding: 5px 8px;
+        border-radius: 6px;
+        font-size: 14px;
+        z-index: 9999;
+      }
+    </style>
   </head>
-  <body style="margin: 0; overflow: hidden;">
-    <!-- Dropdown for parishes -->
-    <select id="parishSelect" 
-            style="position: absolute; top: 10px; left: 10px; z-index: 1000; padding: 6px;">
-      <option value="">-- Choose Parish --</option>
+  <body style="margin:0; overflow:hidden;">
+
+    <!-- Dropdown Menu -->
+    <select id="parishSelector">
       <option value="kingston.json">Kingston</option>
-      <option value="st_mary.json">St. Mary</option>
-      <option value="st_catherine.json">St. Catherine (Spanish Town)</option>
+      <option value="stmary.json">St. Mary</option>
+      <option value="spanishtown.json">Spanish Town</option>
     </select>
 
-    <!-- GPS Debug Overlay -->
-    <div id="gps-debug" style="position: absolute; bottom: 10px; left: 10px; 
-      background: rgba(0,0,0,0.6); color: white; padding: 8px; 
-      font-size: 14px; border-radius: 6px; z-index: 1000;">
-      GPS: waiting...
-    </div>
+    <!-- Debug info -->
+    <div id="gpsDebug">Waiting for GPS...</div>
 
+    <!-- AR Scene -->
     <a-scene
-      vr-mode-ui="enabled: true"
+      vr-mode-ui="enabled: false"
       embedded
-      arjs="sourceType: webcam; debugUIEnabled: true;">
-      
+      arjs="sourceType: webcam; gpsMinAccuracy: 100; debugUIEnabled: false;"
+    >
       <!-- Assets -->
       <a-assets>
-        <a-asset-item id="duck" src="assets/Duck.gltf"></a-asset-item>
+        <a-asset-item id="duck" src="./assets/Duck.glb"></a-asset-item>
       </a-assets>
 
       <!-- Camera -->
-      <a-camera gps-camera rotation-reader fov="10"></a-camera>
-      <!-- Test Objects for Spanish Town -->
-      <a-text value="Hello Spanish Town!"
-              look-at="[gps-camera]"
-              scale="20 20 20"
-              gps-entity-place="latitude: 17.996; longitude: -76.949">
-      </a-text>
-
-      <a-entity gltf-model="#duck"
-                gps-entity-place="latitude: 17.997; longitude: -76.949"
-                scale="5 5 5">
-      </a-entity>
+      <a-camera gps-camera rotation-reader></a-camera>
     </a-scene>
 
     <script>
-      // GPS Debug script
-      if ("geolocation" in navigator) {
-        navigator.geolocation.watchPosition(
-          (pos) => {
-            const lat = pos.coords.latitude.toFixed(6);
-            const lng = pos.coords.longitude.toFixed(6);
-            const acc = pos.coords.accuracy.toFixed(1);
-            document.getElementById("gps-debug").innerText =
-              `GPS: ${lat}, ${lng} (±${acc}m)`;
-          },
-          (err) => {
-            document.getElementById("gps-debug").innerText = "GPS Error: " + err.message;
-          },
-          { enableHighAccuracy: true, maximumAge: 1000 }
-        );
-      } else {
-        document.getElementById("gps-debug").innerText = "GPS not supported.";
+      // Update GPS debug live
+      window.addEventListener("gps-camera-update-position", e => {
+        document.getElementById("gpsDebug").innerText =
+          `Lat: ${e.detail.position.latitude.toFixed(5)}, Lng: ${e.detail.position.longitude.toFixed(5)}, Acc: ${e.detail.position.accuracy}m`;
+      });
+
+      async function loadParish(parishFile) {
+        // Clear previous drops
+        document.querySelectorAll("[gps-entity-place]").forEach(el => el.remove());
+
+        // Fetch parish data
+        const response = await fetch(parishFile);
+        const data = await response.json();
+
+        data.drops.forEach(drop => {
+          let el;
+          if (drop.type === "text") {
+            el = document.createElement("a-text");
+            el.setAttribute("gps-entity-place", `latitude: ${drop.lat}; longitude: ${drop.lng}`);
+            el.setAttribute("value", drop.content);
+            el.setAttribute("color", "red");
+            el.setAttribute("scale", "50 50 50");
+            el.setAttribute("look-at", "[gps-camera]");
+          }
+
+          if (drop.type === "3d_model") {
+            el = document.createElement("a-entity");
+            el.setAttribute("gps-entity-place", `latitude: ${drop.lat}; longitude: ${drop.lng}`);
+            el.setAttribute("gltf-model", drop.asset);
+            el.setAttribute("scale", "15 15 15");
+          }
+
+          if (el) document.querySelector("a-scene").appendChild(el);
+        });
       }
+
+      // Load default parish (Kingston)
+      loadParish("kingston.json");
+
+      // Dropdown listener
+      document.getElementById("parishSelector").addEventListener("change", (e) => {
+        loadParish(e.target.value);
+      });
     </script>
   </body>
 </html>
