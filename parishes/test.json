@@ -1,0 +1,16 @@
+{
+  "drops": [
+    {
+      "type": "text",
+      "lat": 0,
+      "lng": 0,
+      "content": "Hello from Test Mode!"
+    },
+    {
+      "type": "3d_model",
+      "lat": 0,
+      "lng": 0,
+      "asset": "./assets/Duck.glb"
+    }
+  ]
+}
