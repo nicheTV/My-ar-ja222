@@ -1,9 +1,0 @@
-{
-  "places": [
-    {
-      "name": "Spanish Town Test",
-      "description": "Hello from AR text + Duck!",
-      "model": "./assets/Duck.gltf"
-    }
-  ]
-}
