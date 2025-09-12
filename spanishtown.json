@@ -1,0 +1,34 @@
+{
+  "drops": [
+    {
+      "type": "text",
+      "lat": 17.9946,
+      "lng": -76.9570,
+      "content": "Welcome to Spanish Town!"
+    },
+    {
+      "type": "3d_model",
+      "lat": 17.9948,
+      "lng": -76.9572,
+      "asset": "./assets/Duck.glb"
+    },
+    {
+      "type": "text",
+      "lat": 17.9950,
+      "lng": -76.9565,
+      "content": "Mega Mart Supermarket"
+    },
+    {
+      "type": "text",
+      "lat": 17.9943,
+      "lng": -76.9575,
+      "content": "Spanish Town Mall"
+    },
+    {
+      "type": "text",
+      "lat": 17.9938,
+      "lng": -76.9568,
+      "content": "Town Square Centre"
+    }
+  ]
+}
