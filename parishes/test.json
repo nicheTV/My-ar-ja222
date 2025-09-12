@@ -1,16 +1,20 @@
-{
-  "drops": [
-    {
-      "type": "text",
-      "lat": 0,
-      "lng": 0,
-      "content": "Hello from Test Mode!"
-    },
-    {
-      "type": "3d_model",
-      "lat": 0,
-      "lng": 0,
-      "asset": "./assets/Duck.glb"
-    }
-  ]
-}
+[
+  {
+    "type": "model",
+    "url": "Duck.gltf",
+    "scale": "0.5 0.5 0.5",
+    "rotation": "0 180 0",
+    "position": "0 0 0",
+    "lat": 18.0179,
+    "lon": -76.8095
+  },
+  {
+    "type": "text",
+    "text": "Hello from the Duck!",
+    "scale": "5 5 5",
+    "rotation": "0 180 0",
+    "position": "0 2 0",
+    "lat": 18.0179,
+    "lon": -76.8097
+  }
+]
