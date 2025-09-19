@@ -1,118 +1,194 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <meta charset="utf-8" />
     <title>Parish AR World</title>
 
-    <!-- Latest A-Frame -->
-    <script src="https://aframe.io/releases/1.4.1/aframe.min.js"></script>
-
-    <!-- Updated AR.js build -->
-    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.js"></script>
-
-    <!-- GPS place component -->
-    <script src="https://unpkg.com/aframe-gps-entity-place/dist/aframe-gps-entity-place.min.js"></script>
+    <!-- A-Frame (use the version you had working) -->
+    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+    <!-- AR.js (use the jeromeetienne build you used earlier which matched your working test) -->
+    <script src="https://jeromeetienne.github.io/AR.js/aframe/build/aframe-ar.js"></script>
 
     <style>
+      body { margin:0; overflow:hidden; }
       #parishSelector {
-        position: absolute;
-        top: 10px;
-        left: 10px;
-        z-index: 9999;
-        font-size: 16px;
-        padding: 5px;
-        border-radius: 6px;
+        position: absolute; top: 10px; left: 10px; z-index: 9999;
+        font-size: 16px; padding: 6px; border-radius: 6px;
       }
       #gpsDebug {
-        position: absolute;
-        bottom: 10px;
-        left: 10px;
-        background: rgba(255,255,255,0.7);
-        padding: 5px 8px;
-        border-radius: 6px;
-        font-size: 14px;
-        z-index: 9999;
+        position: absolute; bottom: 10px; left: 10px; z-index: 9999;
+        background: rgba(0,0,0,0.6); color: white; padding: 8px; border-radius: 6px;
+        font-size: 13px;
       }
     </style>
   </head>
-  <body style="margin:0; overflow:hidden;">
 
-    <!-- Dropdown Menu -->
+  <body>
+    <!-- Parish selector -->
     <select id="parishSelector">
+      <option value="">-- choose parish --</option>
+      <option value="parishes/test.json">Test Mode (in-front)</option>
+      <option value="parishes/spanishtown.json">Spanish Town</option>
       <option value="parishes/kingston.json">Kingston</option>
       <option value="parishes/stmary.json">St. Mary</option>
-      <option value="parishes/spanishtown.json">Spanish Town</option>
-      <option value="parishes/test.json">Test Mode</option>
     </select>
 
-    <!-- Debug info -->
-    <div id="gpsDebug">Waiting for GPS...</div>
+    <!-- GPS debug -->
+    <div id="gpsDebug">GPS: waiting...</div>
 
-    <!-- AR Scene -->
-    <a-scene
-      vr-mode-ui="enabled: false"
-      embedded
-      arjs="sourceType: webcam; gpsMinAccuracy: 100; debugUIEnabled: false;"
-    >
-      <!-- Assets -->
-      <a-assets>
-        <a-asset-item id="duck" src="./assets/Duck.glb"></a-asset-item>
-      </a-assets>
+    <!-- A-Frame scene with AR.js -->
+    <a-scene embedded arjs>
+      <a-assets id="aAssets"></a-assets>
 
       <!-- Camera -->
       <a-camera gps-camera rotation-reader></a-camera>
     </a-scene>
 
     <script>
-  async function loadParish(parishFile) {
-    try {
-      // Clear old entities
-      document.querySelectorAll("[gps-entity-place]").forEach(el => el.remove());
-
-      // Fetch JSON
-      const response = await fetch(parishFile);
-      if (!response.ok) {
-        throw new Error(`File not found: ${parishFile}`);
+      // --- Helper: add asset item (avoid duplicates) ---
+      function ensureAsset(url) {
+        const id = 'asset-' + btoa(url).replace(/=+$/,'').replace(/[^a-zA-Z0-9]/g,'');
+        if (document.getElementById(id)) return '#' + id;
+        const aAssets = document.getElementById('aAssets');
+        const item = document.createElement('a-asset-item');
+        item.setAttribute('id', id);
+        item.setAttribute('src', url);
+        aAssets.appendChild(item);
+        return '#' + id;
       }
-      const data = await response.json();
 
-      // Add each drop
-      data.drops.forEach(drop => {
-        let el;
-        if (drop.type === "text") {
-          el = document.createElement("a-text");
-          el.setAttribute("gps-entity-place", `latitude: ${drop.lat}; longitude: ${drop.lng}`);
-          el.setAttribute("value", drop.content);
-          el.setAttribute("color", "red");
-          el.setAttribute("scale", "50 50 50");
-          el.setAttribute("look-at", "[gps-camera]");
+      // --- Create entity for a place item ---
+      function createPlaceEntity(place) {
+        // If place.model is present, build a model entity
+        if (place.model) {
+          const modelEl = document.createElement('a-entity');
+
+          // If place defines lat/lng -> use GPS anchor
+          if (typeof place.lat === 'number' && typeof place.lng === 'number') {
+            modelEl.setAttribute('gps-entity-place', `latitude: ${place.lat}; longitude: ${place.lng};`);
+          } else {
+            // No lat/lng -> put in front of camera
+            modelEl.setAttribute('position', place.position || '0 0 -3');
+          }
+
+          // if model path looks external or relative, ensure asset and use asset id
+          const modelUrl = place.model;
+          // if extension is .gltf/.glb, we can use ensureAsset for a-asset-item.
+          if (modelUrl) {
+            try {
+              const assetId = ensureAsset(modelUrl);
+              // Some A-Frame versions allow gltf-model="#id" for a-asset-item
+              modelEl.setAttribute('gltf-model', assetId);
+            } catch (err) {
+              // fallback: set url directly
+              modelEl.setAttribute('gltf-model', modelUrl);
+            }
+          }
+
+          // optional scale / rotation (fallback defaults)
+          if (place.scale) modelEl.setAttribute('scale', place.scale);
+          else modelEl.setAttribute('scale', place.scale || '5 5 5');
+
+          if (place.rotation) modelEl.setAttribute('rotation', place.rotation);
+
+          // if description/Text wanted as child
+          if (place.description) {
+            const textEl = document.createElement('a-text');
+            textEl.setAttribute('value', place.description);
+            textEl.setAttribute('align', 'center');
+            textEl.setAttribute('color', place.textColor || '#FF0000');
+            textEl.setAttribute('width', place.textWidth || '6');
+            // place text slightly above model if no explicit positions
+            if (!place.lat && !place.lng) textEl.setAttribute('position', place.textPosition || '0 1.5 0');
+            else textEl.setAttribute('position', place.textPosition || '0 2 0');
+            modelEl.appendChild(textEl);
+          }
+
+          return modelEl;
         }
-        if (drop.type === "3d_model") {
-          el = document.createElement("a-entity");
-          el.setAttribute("gps-entity-place", `latitude: ${drop.lat}; longitude: ${drop.lng}`);
-          el.setAttribute("gltf-model", drop.asset);
-          el.setAttribute("scale", "15 15 15");
+
+        // If it's just text
+        if (place.description) {
+          const textEl = document.createElement('a-text');
+          textEl.setAttribute('value', place.description);
+          textEl.setAttribute('align', 'center');
+          textEl.setAttribute('color', place.textColor || '#FF0000');
+          textEl.setAttribute('width', place.textWidth || '6');
+          if (typeof place.lat === 'number' && typeof place.lng === 'number') {
+            textEl.setAttribute('gps-entity-place', `latitude: ${place.lat}; longitude: ${place.lng};`);
+          } else {
+            textEl.setAttribute('position', place.position || '0 1.8 -3');
+          }
+          return textEl;
         }
-        if (el) document.querySelector("a-scene").appendChild(el);
+
+        return null;
+      }
+
+      // --- Clear existing placed entities (gps-entity-place or in-scene entities we added) ---
+      function clearPlacedEntities() {
+        const scene = document.querySelector('a-scene');
+        // Remove children that have gps-entity-place or were appended by us (we mark by a custom attr)
+        const toRemove = Array.from(scene.querySelectorAll('[gps-entity-place], [data-ar-generated="true"]'));
+        toRemove.forEach(el => el.parentNode && el.parentNode.removeChild(el));
+      }
+
+      // --- Load a parish JSON and spawn places ---
+      async function loadParish(parishPath) {
+        try {
+          clearPlacedEntities();
+          console.log('Loading parish ->', parishPath);
+
+          const res = await fetch(parishPath + '?cacheBust=' + Date.now());
+          if (!res.ok) throw new Error('File not found: ' + parishPath);
+          const json = await res.json();
+
+          // support either "places" or "drops" or top-level array
+          let places = json.places || json.drops || json;
+          if (!Array.isArray(places)) {
+            console.warn('Unknown JSON shape - expected array in places/drops', json);
+            return;
+          }
+
+          // For each place, create entity and attach to scene
+          const scene = document.querySelector('a-scene');
+          places.forEach((place) => {
+            const ent = createPlaceEntity(place);
+            if (ent) {
+              // mark so clearPlacedEntities can remove it later
+              ent.setAttribute('data-ar-generated', 'true');
+              scene.appendChild(ent);
+            }
+          });
+
+          console.log('✅ Parish loaded:', parishPath, 'places:', places.length);
+        } catch (err) {
+          console.error('Error loading parish:', err);
+          document.getElementById('gpsDebug').innerText = 'Error loading parish: ' + err.message;
+        }
+      }
+
+      // --- Update GPS debug (uses gps-camera event if available) ---
+      window.addEventListener('gps-camera-update-position', (e) => {
+        const p = e.detail.position;
+        document.getElementById('gpsDebug').innerText =
+          `Lat: ${p.latitude.toFixed(6)}, Lng: ${p.longitude.toFixed(6)}, Acc: ${p.accuracy}m`;
       });
 
-      console.log(`✅ Loaded parish: ${parishFile}`);
-    } catch (err) {
-      console.error("❌ Error loading parish:", err);
-    }
-  }
+      // --- Setup selector and default load ---
+      window.addEventListener('DOMContentLoaded', () => {
+        const sel = document.getElementById('parishSelector');
 
-  // Force default load = Test
-  window.addEventListener("load", () => {
-    const selector = document.getElementById("parishSelector");
-    selector.value = "parishes/test.json"; // force default
-    loadParish(selector.value);
+        // default to Test Mode so it works indoors:
+        sel.value = 'parishes/test.json';
+        loadParish(sel.value);
 
-    // Parish switch
-    selector.addEventListener("change", (e) => {
-      console.log("Switching parish:", e.target.value);
-      loadParish(e.target.value);
-    });
-  });
-</script>
+        // change parish when user selects
+        sel.addEventListener('change', (e) => {
+          if (!e.target.value) return;
+          loadParish(e.target.value);
+        });
+      });
+    </script>
   </body>
 </html>
